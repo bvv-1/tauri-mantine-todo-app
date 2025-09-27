@@ -36,7 +36,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             />
             <Title order={3}>Todo</Title>
           </Group>
-          <Button onClick={openForm}>新規作成</Button>
+          <Button onClick={openForm}>New</Button>
         </Group>
       </AppShell.Header>
 

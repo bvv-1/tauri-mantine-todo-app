@@ -78,7 +78,7 @@ export function TodoForm({ opened, onClose, todo }: TodoFormProps) {
     <Modal
       opened={opened}
       onClose={onClose}
-      title={isEditing ? "Edit Todo" : "Add Todo"}
+      title={isEditing ? "Todoの編集" : "Todoの作成"}
     >
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <TextInput
@@ -114,7 +114,7 @@ export function TodoForm({ opened, onClose, todo }: TodoFormProps) {
           <Button variant="default" onClick={onClose}>
             キャンセル
           </Button>
-          <Button type="submit">{isEditing ? "Update" : "Create"}</Button>
+          <Button type="submit">{isEditing ? "更新する" : "作成する"}</Button>
         </Group>
       </form>
     </Modal>
