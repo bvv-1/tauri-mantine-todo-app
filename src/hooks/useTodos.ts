@@ -9,10 +9,19 @@ export interface Todo {
   priority: "high" | "medium" | "low";
   due_date: Date | null;
   completed: boolean;
+  section_id: number;
+}
+
+// RustのSection構造体に対応する型
+export interface Section {
+  id: number;
+  name: string;
 }
 
 export function useTodos() {
   const [todos, setTodos] = useState<Todo[]>([]);
+  const [sections, setSections] = useState<Section[]>([]);
+  const [defaultSectionId, setDefaultSectionId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,9 +37,22 @@ export function useTodos() {
     }
   }, []);
 
+  const fetchSections = useCallback(async () => {
+    try {
+      const result = await invoke<Section[]>("get_sections");
+      setSections(result);
+      const defaultSection = result.find((s) => s.name === "(セクションなし)");
+      if (defaultSection) {
+        setDefaultSectionId(defaultSection.id);
+      }
+    } catch (err) {
+      setError(err as string);
+    }
+  }, []);
+
   useEffect(() => {
-    fetchTodos();
-  }, [fetchTodos]);
+    Promise.all([fetchTodos(), fetchSections()]);
+  }, [fetchTodos, fetchSections]);
 
   const addTodo = async (newTodo: Omit<Todo, "id" | "completed">) => {
     try {
@@ -39,6 +61,7 @@ export function useTodos() {
         description: newTodo.description,
         priority: newTodo.priority,
         dueDate: newTodo.due_date,
+        sectionId: newTodo.section_id,
       });
       await fetchTodos(); // リストを再取得
     } catch (err) {
@@ -72,6 +95,7 @@ export function useTodos() {
         description: updatedTodo.description,
         priority: updatedTodo.priority,
         dueDate: updatedTodo.due_date,
+        sectionId: updatedTodo.section_id,
       });
       await fetchTodos();
     } catch (err) {
@@ -79,14 +103,28 @@ export function useTodos() {
     }
   };
 
+  const createSection = async (name: string) => {
+    try {
+      const newSection = await invoke<Section>("create_section", { name });
+      setSections((prev) => [...prev, newSection]);
+      return newSection;
+    } catch (err) {
+      setError(err as string);
+      throw err;
+    }
+  };
+
   return {
     todos,
+    sections,
     loading,
     error,
     addTodo,
     toggleTodo,
     archiveTodo,
     updateTodo,
+    createSection,
     refetch: fetchTodos,
+    defaultSectionId,
   };
 }

@@ -7,6 +7,7 @@ export const todoSchema = z.object({
   priority: z.enum(["high", "medium", "low"]).default("medium"),
   due_date: z.date().nullable().optional(),
   completed: z.boolean().default(false),
+  section_id: z.number(),
 });
 
 export type TodoSchema = z.infer<typeof todoSchema>;
