@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { Stack, Text, Loader } from "@mantine/core";
+import { Loader, Stack, Text } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { Todo } from "../hooks/useTodos";
+import { useState } from "react";
 import { useTodosContext } from "../contexts/TodosContext";
-import { TodoItem } from "./TodoItem";
+import type { Todo } from "../hooks/useTodos";
 import { TodoForm } from "./TodoForm";
+import { TodoItem } from "./TodoItem";
 
 export function TodoList() {
   const { todos, loading, error } = useTodosContext();

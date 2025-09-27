@@ -1,17 +1,17 @@
 import {
-  Modal,
-  TextInput,
-  Textarea,
-  Select,
   Button,
   Group,
+  Modal,
+  Select,
+  Textarea,
+  TextInput,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import { useForm, zodResolver } from "@mantine/form";
 import { useEffect } from "react";
-import { Todo } from "../hooks/useTodos";
 import { useTodosContext } from "../contexts/TodosContext";
-import { todoSchema, TodoSchema } from "../schema";
+import type { Todo } from "../hooks/useTodos";
+import { type TodoSchema, todoSchema } from "../schema";
 
 interface TodoFormProps {
   opened: boolean;
@@ -52,7 +52,7 @@ export function TodoForm({ opened, onClose, todo }: TodoFormProps) {
     } else {
       form.reset();
     }
-  }, [isEditing, todo, form.setValues]);
+  }, [isEditing, todo, form.setValues, form.reset]);
 
   const handleSubmit = async (values: TodoSchema) => {
     const todoData = {
@@ -62,7 +62,7 @@ export function TodoForm({ opened, onClose, todo }: TodoFormProps) {
     };
 
     if (isEditing) {
-      await updateTodo({ id: todo!.id, ...todoData });
+      await updateTodo({ id: todo.id, ...todoData });
     } else {
       await addTodo(todoData);
     }

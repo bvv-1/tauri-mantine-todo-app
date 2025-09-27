@@ -1,7 +1,7 @@
-import { Card, Checkbox, Text, Group, ActionIcon, Badge } from "@mantine/core";
-import { IconTrash, IconPencil } from "@tabler/icons-react";
-import { Todo } from "../hooks/useTodos";
+import { ActionIcon, Badge, Card, Checkbox, Group, Text } from "@mantine/core";
+import { IconPencil, IconTrash } from "@tabler/icons-react";
 import { useTodosContext } from "../contexts/TodosContext";
+import type { Todo } from "../hooks/useTodos";
 
 interface TodoItemProps {
   todo: Todo;

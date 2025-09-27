@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "ts": "tsc --noEmit",
-    "fmt": "biome format --write src/"
+    "fmt": "biome check --write src/ && biome format --write src/"
   },
   "dependencies": {
     "@mantine/core": "^8.3.2",
