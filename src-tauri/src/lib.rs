@@ -85,7 +85,7 @@ fn toggle_todo_completed(db: State<DbConnection>, id: i64) -> Result<(), String>
 #[tauri::command]
 fn archive_todo(db: State<DbConnection>, id: i64) -> Result<(), String> {
     let conn = db.0.lock().map_err(|e| e.to_string())?;
-    
+
     conn.execute(
         "INSERT INTO archives (id, title, description, priority, due_date, completed, created_at, updated_at) 
          SELECT id, title, description, priority, due_date, completed, created_at, updated_at FROM todos WHERE id = ?1",
@@ -93,11 +93,8 @@ fn archive_todo(db: State<DbConnection>, id: i64) -> Result<(), String> {
     )
     .map_err(|e| e.to_string())?;
 
-    conn.execute(
-        "DELETE FROM todos WHERE id = ?1",
-        params![id],
-    )
-    .map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM todos WHERE id = ?1", params![id])
+        .map_err(|e| e.to_string())?;
 
     Ok(())
 }
@@ -123,7 +120,7 @@ fn update_todo(
 
 fn initialize_database() -> Result<Connection, Box<dyn std::error::Error>> {
     let conn = Connection::open("todo.db")?;
-    
+
     conn.execute(
         "CREATE TABLE IF NOT EXISTS todos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -161,15 +158,105 @@ pub fn run() {
     let conn = initialize_database().expect("Failed to initialize database");
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .manage(DbConnection(Mutex::new(conn)))
         .invoke_handler(tauri::generate_handler![
-            get_todos, 
-            add_todo, 
-            toggle_todo_completed, 
+            get_todos,
+            add_todo,
+            toggle_todo_completed,
             archive_todo,
             update_todo
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+
+    fn setup_in_memory_db() -> Connection {
+        let conn = Connection::open_in_memory().unwrap();
+        initialize_database_for_test(&conn);
+        conn
+    }
+
+    fn initialize_database_for_test(conn: &Connection) {
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS todos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                description TEXT,
+                priority TEXT DEFAULT 'medium',
+                due_date TEXT,
+                completed INTEGER DEFAULT 0,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )",
+            [],
+        ).unwrap();
+    }
+
+    #[test]
+    fn test_format_due_date_to_jst() {
+        // Test with a valid date string
+        let rfc3339_string = "2023-10-27T10:00:00Z".to_string();
+        let formatted = format_due_date_to_jst(Some(rfc3339_string)).unwrap();
+        assert!(formatted.is_some());
+        // 2023-10-27T19:00:00+09:00
+        assert!(formatted.unwrap().contains("+09:00"));
+
+        // Test with None
+        let formatted_none = format_due_date_to_jst(None).unwrap();
+        assert!(formatted_none.is_none());
+    }
+
+    #[test]
+    fn test_add_todo_with_due_date() {
+        let conn = setup_in_memory_db();
+
+        let title = "Test Todo".to_string();
+        let description = Some("Test Description".to_string());
+        let priority = "high".to_string();
+        let due_date_str = Utc::now().to_rfc3339();
+        let due_date = Some(due_date_str.clone());
+
+        let formatted_due_date = format_due_date_to_jst(due_date).unwrap();
+
+        conn.execute(
+            "INSERT INTO todos (title, description, priority, due_date) VALUES (?1, ?2, ?3, ?4)",
+            params![title, description, priority, formatted_due_date],
+        ).unwrap();
+
+        let mut stmt = conn.prepare("SELECT due_date FROM todos WHERE id = 1").unwrap();
+        let retrieved_due_date: Option<String> = stmt.query_row([], |row| row.get(0)).unwrap();
+
+        assert!(retrieved_due_date.is_some());
+        // Check if it's a valid RFC3339 string and in JST
+        let retrieved_str = retrieved_due_date.unwrap();
+        assert!(DateTime::parse_from_rfc3339(&retrieved_str).is_ok());
+        assert!(retrieved_str.contains("+09:00"));
+    }
+
+    #[test]
+    fn test_add_todo_without_due_date() {
+        let conn = setup_in_memory_db();
+
+        let title = "Test Todo".to_string();
+        let description = Some("Test Description".to_string());
+        let priority = "high".to_string();
+        let due_date: Option<String> = None;
+
+        conn.execute(
+            "INSERT INTO todos (title, description, priority, due_date) VALUES (?1, ?2, ?3, ?4)",
+            params![title, description, priority, due_date],
+        ).unwrap();
+
+        let mut stmt = conn.prepare("SELECT due_date FROM todos WHERE id = 1").unwrap();
+        let retrieved_due_date: Option<String> = stmt.query_row([], |row| row.get(0)).unwrap();
+
+        assert!(retrieved_due_date.is_none());
+    }
 }

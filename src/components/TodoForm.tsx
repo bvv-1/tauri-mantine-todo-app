@@ -8,6 +8,7 @@ import {
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import { useForm, zodResolver } from "@mantine/form";
+import { message } from "@tauri-apps/plugin-dialog";
 import { useEffect } from "react";
 import { useTodosContext } from "../contexts/TodosContext";
 import type { Todo } from "../hooks/useTodos";
@@ -55,19 +56,26 @@ export function TodoForm({ opened, onClose, todo }: TodoFormProps) {
   }, [isEditing, todo, form.setValues, form.reset]);
 
   const handleSubmit = async (values: TodoSchema) => {
-    const todoData = {
-      ...values,
-      description: values.description || null,
-      due_date: values.due_date ?? null,
-    };
+    try {
+      const todoData = {
+        ...values,
+        description: values.description || null,
+        due_date: values.due_date
+          ? new Date(values.due_date).toISOString()
+          : null,
+      };
+      await message(JSON.stringify(todoData, null, 2));
 
-    if (isEditing) {
-      await updateTodo({ id: todo.id, ...todoData });
-    } else {
-      await addTodo(todoData);
+      if (isEditing) {
+        await updateTodo({ id: todo.id, ...todoData });
+      } else {
+        await addTodo(todoData);
+      }
+      form.reset();
+      onClose();
+    } catch (error) {
+      await message(String(error), { title: "Error" });
     }
-    form.reset();
-    onClose();
   };
 
   return (
@@ -101,12 +109,8 @@ export function TodoForm({ opened, onClose, todo }: TodoFormProps) {
           clearable
           mt="md"
           value={form.values.due_date ? new Date(form.values.due_date) : null}
-          onChange={(dateString: string | null) => {
-            const dateObject = dateString ? new Date(dateString) : null;
-            form.setFieldValue(
-              "due_date",
-              dateObject ? dateObject.toISOString() : null,
-            );
+          onChange={(date: string | null) => {
+            form.setFieldValue("due_date", date);
           }}
         />
         <Group justify="flex-end" mt="lg">
