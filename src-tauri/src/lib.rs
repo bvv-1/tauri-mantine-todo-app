@@ -1,3 +1,4 @@
+use chrono::{DateTime, FixedOffset};
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
@@ -14,6 +15,18 @@ struct Todo {
 }
 
 struct DbConnection(Mutex<Connection>);
+
+fn format_due_date_to_jst(due_date: Option<String>) -> Result<Option<String>, String> {
+    match due_date {
+        Some(date_str) => {
+            let parsed_date = DateTime::parse_from_rfc3339(&date_str).map_err(|e| e.to_string())?;
+            let jst_offset = FixedOffset::east_opt(9 * 3600).unwrap();
+            let jst_date = parsed_date.with_timezone(&jst_offset);
+            Ok(Some(jst_date.to_rfc3339()))
+        }
+        None => Ok(None),
+    }
+}
 
 #[tauri::command]
 fn get_todos(db: State<DbConnection>) -> Result<Vec<Todo>, String> {
@@ -48,10 +61,11 @@ fn add_todo(
     priority: String,
     due_date: Option<String>,
 ) -> Result<(), String> {
+    let formatted_due_date = format_due_date_to_jst(due_date)?;
     let conn = db.0.lock().map_err(|e| e.to_string())?;
     conn.execute(
         "INSERT INTO todos (title, description, priority, due_date, updated_at) VALUES (?1, ?2, ?3, ?4, CURRENT_TIMESTAMP)",
-        params![title, description, priority, due_date],
+        params![title, description, priority, formatted_due_date],
     )
     .map_err(|e| e.to_string())?;
     Ok(())
@@ -97,10 +111,11 @@ fn update_todo(
     priority: String,
     due_date: Option<String>,
 ) -> Result<(), String> {
+    let formatted_due_date = format_due_date_to_jst(due_date)?;
     let conn = db.0.lock().map_err(|e| e.to_string())?;
     conn.execute(
         "UPDATE todos SET title = ?1, description = ?2, priority = ?3, due_date = ?4, updated_at = CURRENT_TIMESTAMP WHERE id = ?5",
-        params![title, description, priority, due_date, id],
+        params![title, description, priority, formatted_due_date, id],
     )
     .map_err(|e| e.to_string())?;
     Ok(())

@@ -8,10 +8,12 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "ts": "tsc --noEmit"
+    "ts": "tsc --noEmit",
+    "fmt": "biome format --write src/"
   },
   "dependencies": {
     "@mantine/core": "^8.3.2",
+    "@mantine/dates": "^8.3.2",
     "@mantine/form": "^8.3.2",
     "@mantine/hooks": "^8.3.2",
     "@tabler/icons-react": "^3.35.0",
@@ -19,9 +21,11 @@
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-sql": "^2",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.2.4",
     "@tauri-apps/cli": "^2",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
