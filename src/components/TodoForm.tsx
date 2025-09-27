@@ -7,6 +7,10 @@ import {
   TextInput,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
+import dayjs from "dayjs";
+import "dayjs/locale/ja";
+
+dayjs.locale("ja");
 import { useForm, zodResolver } from "@mantine/form";
 import { message } from "@tauri-apps/plugin-dialog";
 import { useEffect } from "react";
@@ -95,9 +99,11 @@ export function TodoForm({ opened, onClose, todo }: TodoFormProps) {
         />
         <DatePickerInput
           label="Due Date"
-          placeholder="Pick date"
+          placeholder="日付を選択"
           clearable
           mt="md"
+          locale="ja"
+          valueFormat="YYYY/MM/DD"
           value={form.values.due_date ? new Date(form.values.due_date) : null}
           onChange={(date) =>
             form.setFieldValue("due_date", date ? new Date(date) : null)

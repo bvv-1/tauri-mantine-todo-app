@@ -1,8 +1,8 @@
-import { AppShell, Burger, Button, Group, Title, Code } from "@mantine/core";
+import { AppShell, Burger, Button, Code, Group, Title } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { useState, useEffect } from "react";
-import { TodoForm } from "./TodoForm";
+import { useEffect, useState } from "react";
 import { useTodosContext } from "../contexts/TodosContext";
+import { TodoForm } from "./TodoForm";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [navOpened, { toggle: toggleNav }] = useDisclosure();
@@ -50,7 +50,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <TodoForm opened={formOpened} onClose={closeForm} />
 
         {debugInfo && (
-          <Code block mt="md" style={{ whiteSpace: 'pre-wrap' }}>
+          <Code block mt="md" style={{ whiteSpace: "pre-wrap" }}>
             {debugInfo}
           </Code>
         )}
