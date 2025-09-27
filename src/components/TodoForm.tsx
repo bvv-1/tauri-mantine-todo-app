@@ -24,13 +24,7 @@ export function TodoForm({ opened, onClose, todo }: TodoFormProps) {
   const { addTodo, updateTodo } = useTodosContext();
   const isEditing = !!todo;
 
-  const form = useForm<{
-    title: string;
-    description: string | null;
-    priority: "high" | "medium" | "low";
-    due_date: string | null;
-    completed: boolean;
-  }>({
+  const form = useForm<TodoSchema>({
     initialValues: {
       title: "",
       description: null,
@@ -60,11 +54,8 @@ export function TodoForm({ opened, onClose, todo }: TodoFormProps) {
       const todoData = {
         ...values,
         description: values.description || null,
-        due_date: values.due_date
-          ? new Date(values.due_date).toISOString()
-          : null,
+        due_date: values.due_date || null,
       };
-      await message(JSON.stringify(todoData, null, 2));
 
       if (isEditing) {
         await updateTodo({ id: todo.id, ...todoData });
@@ -88,7 +79,6 @@ export function TodoForm({ opened, onClose, todo }: TodoFormProps) {
         <TextInput
           label="Title"
           placeholder="Enter todo title"
-          required
           {...form.getInputProps("title")}
         />
         <Textarea
@@ -109,9 +99,9 @@ export function TodoForm({ opened, onClose, todo }: TodoFormProps) {
           clearable
           mt="md"
           value={form.values.due_date ? new Date(form.values.due_date) : null}
-          onChange={(date: string | null) => {
-            form.setFieldValue("due_date", date);
-          }}
+          onChange={(date) =>
+            form.setFieldValue("due_date", date ? new Date(date) : null)
+          }
         />
         <Group justify="flex-end" mt="lg">
           <Button variant="default" onClick={onClose}>

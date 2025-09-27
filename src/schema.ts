@@ -5,7 +5,7 @@ export const todoSchema = z.object({
   title: z.string().min(1, "Todo title cannot be empty"),
   description: z.string().nullable().optional(),
   priority: z.enum(["high", "medium", "low"]).default("medium"),
-  due_date: z.string().nullable(), // Storing as Date object in form
+  due_date: z.date().nullable().optional(),
   completed: z.boolean().default(false),
 });
 

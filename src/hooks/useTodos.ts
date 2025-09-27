@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { message } from "@tauri-apps/plugin-dialog";
 import { useCallback, useEffect, useState } from "react";
 
 // RustのTodo構造体に対応する型
@@ -7,7 +8,7 @@ export interface Todo {
   title: string;
   description: string | null;
   priority: "high" | "medium" | "low";
-  due_date: string | null;
+  due_date: Date | null;
   completed: boolean;
 }
 
@@ -61,6 +62,7 @@ export function useTodos() {
 
   const updateTodo = async (updatedTodo: Omit<Todo, "completed">) => {
     try {
+      await message(JSON.stringify(updatedTodo, null, 2), { title: "Debug" });
       await invoke("update_todo", { ...updatedTodo });
       await fetchTodos();
     } catch (err) {

@@ -1,4 +1,3 @@
-use chrono::{DateTime, FixedOffset};
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
@@ -15,18 +14,6 @@ struct Todo {
 }
 
 struct DbConnection(Mutex<Connection>);
-
-fn format_due_date_to_jst(due_date: Option<String>) -> Result<Option<String>, String> {
-    match due_date {
-        Some(date_str) => {
-            let parsed_date = DateTime::parse_from_rfc3339(&date_str).map_err(|e| e.to_string())?;
-            let jst_offset = FixedOffset::east_opt(9 * 3600).unwrap();
-            let jst_date = parsed_date.with_timezone(&jst_offset);
-            Ok(Some(jst_date.to_rfc3339()))
-        }
-        None => Ok(None),
-    }
-}
 
 #[tauri::command]
 fn get_todos(db: State<DbConnection>) -> Result<Vec<Todo>, String> {
@@ -61,11 +48,10 @@ fn add_todo(
     priority: String,
     due_date: Option<String>,
 ) -> Result<(), String> {
-    let formatted_due_date = format_due_date_to_jst(due_date)?;
     let conn = db.0.lock().map_err(|e| e.to_string())?;
     conn.execute(
         "INSERT INTO todos (title, description, priority, due_date, updated_at) VALUES (?1, ?2, ?3, ?4, CURRENT_TIMESTAMP)",
-        params![title, description, priority, formatted_due_date],
+        params![title, description, priority, due_date],
     )
     .map_err(|e| e.to_string())?;
     Ok(())
@@ -108,11 +94,10 @@ fn update_todo(
     priority: String,
     due_date: Option<String>,
 ) -> Result<(), String> {
-    let formatted_due_date = format_due_date_to_jst(due_date)?;
     let conn = db.0.lock().map_err(|e| e.to_string())?;
     conn.execute(
         "UPDATE todos SET title = ?1, description = ?2, priority = ?3, due_date = ?4, updated_at = CURRENT_TIMESTAMP WHERE id = ?5",
-        params![title, description, priority, formatted_due_date, id],
+        params![title, description, priority, due_date, id],
     )
     .map_err(|e| e.to_string())?;
     Ok(())
@@ -200,20 +185,6 @@ mod tests {
     }
 
     #[test]
-    fn test_format_due_date_to_jst() {
-        // Test with a valid date string
-        let rfc3339_string = "2023-10-27T10:00:00Z".to_string();
-        let formatted = format_due_date_to_jst(Some(rfc3339_string)).unwrap();
-        assert!(formatted.is_some());
-        // 2023-10-27T19:00:00+09:00
-        assert!(formatted.unwrap().contains("+09:00"));
-
-        // Test with None
-        let formatted_none = format_due_date_to_jst(None).unwrap();
-        assert!(formatted_none.is_none());
-    }
-
-    #[test]
     fn test_add_todo_with_due_date() {
         let conn = setup_in_memory_db();
 
@@ -223,21 +194,15 @@ mod tests {
         let due_date_str = Utc::now().to_rfc3339();
         let due_date = Some(due_date_str.clone());
 
-        let formatted_due_date = format_due_date_to_jst(due_date).unwrap();
-
         conn.execute(
             "INSERT INTO todos (title, description, priority, due_date) VALUES (?1, ?2, ?3, ?4)",
-            params![title, description, priority, formatted_due_date],
+            params![title, description, priority, due_date],
         ).unwrap();
 
         let mut stmt = conn.prepare("SELECT due_date FROM todos WHERE id = 1").unwrap();
         let retrieved_due_date: Option<String> = stmt.query_row([], |row| row.get(0)).unwrap();
 
-        assert!(retrieved_due_date.is_some());
-        // Check if it's a valid RFC3339 string and in JST
-        let retrieved_str = retrieved_due_date.unwrap();
-        assert!(DateTime::parse_from_rfc3339(&retrieved_str).is_ok());
-        assert!(retrieved_str.contains("+09:00"));
+        assert_eq!(retrieved_due_date, due_date);
     }
 
     #[test]
