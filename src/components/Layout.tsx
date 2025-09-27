@@ -34,9 +34,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               hiddenFrom="sm"
               size="sm"
             />
-            <Title order={3}>Tauri Mantine Todo</Title>
+            <Title order={3}>Todo</Title>
           </Group>
-          <Button onClick={openForm}>New Todo</Button>
+          <Button onClick={openForm}>新規作成</Button>
         </Group>
       </AppShell.Header>
 

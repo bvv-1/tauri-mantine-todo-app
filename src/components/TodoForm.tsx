@@ -11,6 +11,7 @@ import dayjs from "dayjs";
 import "dayjs/locale/ja";
 
 dayjs.locale("ja");
+
 import { useForm, zodResolver } from "@mantine/form";
 import { message } from "@tauri-apps/plugin-dialog";
 import { useEffect } from "react";
@@ -81,24 +82,24 @@ export function TodoForm({ opened, onClose, todo }: TodoFormProps) {
     >
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <TextInput
-          label="Title"
-          placeholder="Enter todo title"
+          label="タイトル"
+          placeholder="タイトルを入力"
           {...form.getInputProps("title")}
         />
         <Textarea
-          label="Description"
-          placeholder="Enter todo description"
+          label="説明"
+          placeholder="説明を入力"
           mt="md"
           {...form.getInputProps("description")}
         />
         <Select
-          label="Priority"
+          label="優先度"
           data={["high", "medium", "low"]}
           mt="md"
           {...form.getInputProps("priority")}
         />
         <DatePickerInput
-          label="Due Date"
+          label="期限"
           placeholder="日付を選択"
           clearable
           mt="md"
@@ -111,7 +112,7 @@ export function TodoForm({ opened, onClose, todo }: TodoFormProps) {
         />
         <Group justify="flex-end" mt="lg">
           <Button variant="default" onClick={onClose}>
-            Cancel
+            キャンセル
           </Button>
           <Button type="submit">{isEditing ? "Update" : "Create"}</Button>
         </Group>
