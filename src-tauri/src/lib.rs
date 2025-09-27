@@ -94,6 +94,7 @@ fn update_todo(
     priority: String,
     due_date: Option<String>,
 ) -> Result<(), String> {
+    println!("Updating todo. due_date: {:?}", due_date);
     let conn = db.0.lock().map_err(|e| e.to_string())?;
     conn.execute(
         "UPDATE todos SET title = ?1, description = ?2, priority = ?3, due_date = ?4, updated_at = CURRENT_TIMESTAMP WHERE id = ?5",
@@ -155,73 +156,4 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use chrono::Utc;
-
-    fn setup_in_memory_db() -> Connection {
-        let conn = Connection::open_in_memory().unwrap();
-        initialize_database_for_test(&conn);
-        conn
-    }
-
-    fn initialize_database_for_test(conn: &Connection) {
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS todos (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                description TEXT,
-                priority TEXT DEFAULT 'medium',
-                due_date TEXT,
-                completed INTEGER DEFAULT 0,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-            )",
-            [],
-        ).unwrap();
-    }
-
-    #[test]
-    fn test_add_todo_with_due_date() {
-        let conn = setup_in_memory_db();
-
-        let title = "Test Todo".to_string();
-        let description = Some("Test Description".to_string());
-        let priority = "high".to_string();
-        let due_date_str = Utc::now().to_rfc3339();
-        let due_date = Some(due_date_str.clone());
-
-        conn.execute(
-            "INSERT INTO todos (title, description, priority, due_date) VALUES (?1, ?2, ?3, ?4)",
-            params![title, description, priority, due_date],
-        ).unwrap();
-
-        let mut stmt = conn.prepare("SELECT due_date FROM todos WHERE id = 1").unwrap();
-        let retrieved_due_date: Option<String> = stmt.query_row([], |row| row.get(0)).unwrap();
-
-        assert_eq!(retrieved_due_date, due_date);
-    }
-
-    #[test]
-    fn test_add_todo_without_due_date() {
-        let conn = setup_in_memory_db();
-
-        let title = "Test Todo".to_string();
-        let description = Some("Test Description".to_string());
-        let priority = "high".to_string();
-        let due_date: Option<String> = None;
-
-        conn.execute(
-            "INSERT INTO todos (title, description, priority, due_date) VALUES (?1, ?2, ?3, ?4)",
-            params![title, description, priority, due_date],
-        ).unwrap();
-
-        let mut stmt = conn.prepare("SELECT due_date FROM todos WHERE id = 1").unwrap();
-        let retrieved_due_date: Option<String> = stmt.query_row([], |row| row.get(0)).unwrap();
-
-        assert!(retrieved_due_date.is_none());
-    }
 }

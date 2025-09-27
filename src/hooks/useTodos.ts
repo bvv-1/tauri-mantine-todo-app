@@ -35,7 +35,12 @@ export function useTodos() {
 
   const addTodo = async (newTodo: Omit<Todo, "id" | "completed">) => {
     try {
-      await invoke("add_todo", { ...newTodo });
+      await invoke("add_todo", {
+        title: newTodo.title,
+        description: newTodo.description,
+        priority: newTodo.priority,
+        dueDate: newTodo.due_date
+      });
       await fetchTodos(); // リストを再取得
     } catch (err) {
       setError(err as string);
@@ -63,7 +68,13 @@ export function useTodos() {
   const updateTodo = async (updatedTodo: Omit<Todo, "completed">) => {
     try {
       await message(JSON.stringify(updatedTodo, null, 2), { title: "Debug" });
-      await invoke("update_todo", { ...updatedTodo });
+      await invoke("update_todo", {
+        id: updatedTodo.id,
+        title: updatedTodo.title,
+        description: updatedTodo.description,
+        priority: updatedTodo.priority,
+        dueDate: updatedTodo.due_date
+      });
       await fetchTodos();
     } catch (err) {
       setError(err as string);
